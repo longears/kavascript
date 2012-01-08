@@ -11,6 +11,11 @@ import os,sys
 # -   whitespace
 # {}  added brackets
 
+
+# TODO:
+#   don't mess up existing multi-line brackets?
+#   replace closure with "function () {" and end that block with "}();"
+
 DEBUG = True
 def debug(n,s):
     if DEBUG: print '| %s%s'%('    '*n,s)
