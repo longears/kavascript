@@ -157,20 +157,35 @@ class Lines(object):
                 return False
             lastGoodIndent = indent
 
-        debug(1,'adding brackets')
+        debug(1,'adding open brackets')
         lastIndent = 0
         realLines = [line for line in self.lines if line.hasCode() and line.indent != -1]
+        # add open brackets
         for ii in range(len(realLines)-1):
             lineA = realLines[ii]
             lineB = realLines[ii+1]
-
             if lineA.indent < lineB.indent:
                 lineA.addOpenBracket()
+#             # add close brackets by inserting into the next real line.  this is ugly.
+#             if lineA.indent > lineB.indent:
+#                 numCloseBrackets = lineA.indent - lineB.indent
+#                 for bb in range(numCloseBrackets):
+#                     lineB.addCloseBracket()
 
+        debug(1,'adding close brackets')
+        # add close brackets by going backwards
+        for ii in range(len(realLines)-2,-1,-1):
+            lineA = realLines[ii]
+            lineB = realLines[ii+1]
             if lineA.indent > lineB.indent:
                 numCloseBrackets = lineA.indent - lineB.indent
                 for bb in range(numCloseBrackets):
-                    lineB.addCloseBracket()
+                    indentHere = lineB.indent + bb
+                    newLine = Line('    '*indentHere + '}',-1)
+                    newLine.annotation = list(newLine.text.replace(' ','-'))
+                    newLine.indent = indentHere
+                    newLine.prepareForTranslation()
+                    self.lines.insert(lineA.lineNum,newLine)
 
         return True
 
@@ -243,7 +258,6 @@ var myObject = function (  )
     if (thing1
           && thing)
         value += 1;
-
     // comment
     return   // comment
         increment: function (inc) 
@@ -262,8 +276,10 @@ lines.annotate()
 success = lines.translate()
 if not success:
     sys.exit(0)
-lines.printNewAnnotatedSource()
+# lines.printNewAnnotatedSource()
+print '==========================================='
 for line in lines.lines:
     print line.newText
+print '==========================================='
 
 
