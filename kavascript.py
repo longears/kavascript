@@ -22,6 +22,21 @@ DEBUG = True
 def debug(n,s):
     if DEBUG: print '| %s%s'%('    '*n,s)
 
+def multiFind(string,substring):
+    """Return a list if integers indicating where the substring begins in the string.
+    Substrings are not allowed to overlap themselves:
+        multifind('pppp','pp') = [0,2]
+    If there are no matches, return []
+    """
+    start = 0
+    indices = []
+    while True:
+        start = string.find(substring,start)
+        if start == -1:
+            return indices
+        indices.append(start)
+        start += len(substring)
+
 class Line(object):
     def __init__(self,text,lineNum):
         self.text = text
@@ -55,6 +70,18 @@ class Line(object):
         self.newText = self.text
         self.newAnnotation = self.annotation[:]
         self.preparedForTranslation = True
+
+    def replaceClosure(self):
+        """Assumes this line object has been prepared for translation.
+        """
+        assert self.preparedForTranslation
+
+        # make a temporary list version of the text
+        newText = list(self.newText)
+
+        token = 'closure'
+
+
 
     def addCloseBracket(self):
         """Assumes this line object has been prepared for translation.
@@ -201,6 +228,7 @@ class Lines(object):
         """
         debug(0,'annotating')
         state = '-'
+
         for line in self.lines:
             for ii,char in enumerate(line.text):
                 nextChar = None
@@ -258,7 +286,7 @@ SRC = """
     /* long
        comment */
 
-var myObject = function (  )
+var myObject = closure
     var value = 0;
     var mystring = "he'l\\"lo // there";
     var mystring = 'he"l\\"lo // there';
@@ -288,5 +316,17 @@ print '==========================================='
 for line in lines.lines:
     print line.newText
 print '==========================================='
+
+
+
+
+
+
+
+
+
+
+
+
 
 
