@@ -26,9 +26,9 @@ import os,sys
 #
 #   New "closure" keyword
 #       A new keyword "closure" has been added.  It is simply replaced
-#       with "function ()" wherever it occurs.
+#       with "(function ()" wherever it occurs.
 #       If the CLOSURE_TAILS option is set, then closure blocks will
-#       automatically be closed with "}();" instead of "}".
+#       automatically be closed with "})();" instead of "}".
 
 
 # TODO:
@@ -37,6 +37,18 @@ import os,sys
 #   write command line handling
 #   sometimes we don't want a semicolon at the end of a closure.  when?  how?
 #   strip trailing space added after "{" if it's the last thing on the line
+#   fix this bug:
+#       |    var x =
+#       |        name: 'joe',
+#       |        cities: ['boston',
+#       |                 'new york']
+#       | // but wait we need a semicolon here or something
+#       becomes
+#       |    var x = {
+#       |        name: 'joe',
+#       |        cities: ['boston',
+#       |    }
+#       |                 'new york']
 
 
 # ANNOTATIONS:
@@ -112,7 +124,7 @@ class Line(object):
         assert self.preparedForTranslation
 
         token = 'closure'
-        newToken = 'function ()'
+        newToken = '(function ()'
 
         # prepare a chunk of annotation to go along with the new token
         newAnnotation = []
@@ -348,7 +360,7 @@ class Lines(object):
                         return False
                     # add a new line with a close bracket (and maybe "();" if the parent is a closure)
                     if parentHasClosure and CLOSURE_TAILS:
-                        newLine = Line('    '*indentHere + '}();',-1)
+                        newLine = Line('    '*indentHere + '})();',-1)
                     else:
                         newLine = Line('    '*indentHere + '}',-1)
                     # set up and add the new line
