@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from __future__ import division
 import os,sys
 
@@ -9,20 +8,33 @@ import os,sys
 #   Significant whitespace --> brackets
 #       Brackets are added according to the indentation of each line.
 #       For indendation to be considered as significant, it must come
-#       four spaces at a time, and new indentations should never be
-#       indented more than one level beyond the previous indentation.
+#       four spaces at a time, and new indentations must be exactly four
+#       spaces deeper than the previous level of indentation.
 #
 #       Lines consisting of just whitespace and/or comments are ignored.
 #
+#       Lines are compared to the line above.  If indented the same, it is
+#       a new line.  If indented 4 spaces, it is the beginning of a new block.
+#       Any other level of indentation, and the line is considered part of the
+#       line above it for the purposes of bracket insertion.
 #       Be careful not to accidentally create significant indentation with
 #       a continued line.  Note how the middle line is not indented four spaces
-#       more than the line above it.  If it was, it would break:
+#       more than the line above it.  If it was, it would be considered the beginning
+#       of the block and the semicolon would be incorrectly inserted at the end
+#       of the first line:
 #       |    if (    (1+2+3+4+5+6+7+8+9+10 == 1)
 #       |         && (1+2+3+4+5+6+7+8+9+10 == 1)   )
 #       |        value += 1
 #
 #       You can still use your own brackets within a single line, but don't
 #       provide your own multi-line brackets or you'll end up with doubles.
+#
+#       Don't forget your trailing semicolons:
+#       |    var myJSON =
+#       |        name: 'joe',
+#       |        cities: ['boston',
+#       |                 'new york']
+#       |    ;
 #
 #   New "closure" keyword
 #       A new keyword "closure" has been added.  It is simply replaced
@@ -38,18 +50,6 @@ import os,sys
 #   sometimes we don't want a semicolon at the end of a closure.  when?  how?
 #   strip trailing space added after "{" if it's the last thing on the line
 #   require ":" at the end of a line above an indent, like in python
-#   fix this bug:
-#       |    var x =
-#       |        name: 'joe',
-#       |        cities: ['boston',
-#       |                 'new york']
-#       | // but wait we need a semicolon here or something
-#       becomes
-#       |    var x = {
-#       |        name: 'joe',
-#       |        cities: ['boston',
-#       |    }
-#       |                 'new york']
 
 
 # ANNOTATIONS:
@@ -303,16 +303,22 @@ class Lines(object):
         for line in self.lines:
             if not line.hasCode(): continue
             spaces = line.numLeadingSpaces()
-            if spaces%4 != 0:
-                line.indent = lastGoodIndent
-                continue
             indent = int(spaces / 4)
-            line.indent = indent
-            if indent > lastGoodIndent+1:
-                print 'ERROR: line %s is indented too far:'%line.lineNum
+            if indent == lastGoodIndent:
+                line.indent = indent
+                lastGoodIndent = indent
+            elif spaces%4 == 0 and indent == lastGoodIndent + 1:
+                line.indent = indent
+                lastGoodIndent = indent
+            elif spaces%4 == 0 and indent < lastGoodIndent:
+                line.indent = indent
+                lastGoodIndent = indent
+            elif spaces > lastGoodIndent*4:
+                line.indent = lastGoodIndent
+            elif spaces < lastGoodIndent*4:
+                print 'WARNING: line %s has confusing indentation:'%line.lineNum
                 print '>>>%s<<<'%line.text
-                return False
-            lastGoodIndent = indent
+                line.indent = lastGoodIndent
 
         debug(1,'replacing "closure" tokens')
         for line in self.lines:
@@ -382,15 +388,15 @@ class Lines(object):
 
 
 
-SRC = """
+SRC = r"""
 // comment with apparent "string" and the word closure
     /* long comment
        with decoy things: closure "string" */
 
 var myObject = closure // this will be replaced with "function ()"
     var value = 0;
-    var mystring1 = "he'l\\"lo // there";
-    var mystring2 = 'he"l\\"lo // there';
+    var mystring1 = "he'l\"lo // there";
+    var mystring2 = 'he"l\"lo // there';
     var mystring3 = "closure";
     if (    (1+2+3+4+5+6+7+8+9+10 == 1)
          && (1+2+3+4+5+6+7+8+9+10 == 1)   )
@@ -404,6 +410,7 @@ var myObject = closure // this will be replaced with "function ()"
         getValue: function (  ) 
             return value;
 
+// closure test
 cubes = closure
     var _i, _len, _results;
     _results = [];
@@ -411,6 +418,46 @@ cubes = closure
         num = list[_i];
         _results.push(math.cube(num));
     return _results;
+
+// typical node code
+http.createServer(function (req, res)
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end('Hello World\n');
+).listen(1337, "127.0.0.1");
+
+Step(
+    function readDir()
+        fs.readdir(__dirname, this);
+    ,
+    function readFiles(err, results)
+        if (err) throw err;
+        // Create a new group
+        var group = this.group();
+        results.forEach(function (filename)
+            if (/\.js$/.test(filename))
+                fs.readFile(__dirname + "/" + filename, 'utf8', group());
+        );
+    ,
+    function showAll(err , files)
+        if (err) throw err;
+        console.dir(files);
+);
+
+// object literals / JSON with funny indentation
+var x = doSomethingTo(
+    cities1: [
+   'boston',
+     'new york'
+     ],
+    cities2: [
+             'boston',
+             'new york'
+             ],
+    cities3: [
+                'boston',
+                'new york'
+            ]
+);
 
 """
 
