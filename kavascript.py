@@ -15,6 +15,8 @@ import os,sys
 # TODO:
 #   don't mess up existing multi-line brackets?
 #   replace closure with "function () {" and end that block with "}();"
+#   write file input / ouput
+#   write command line handling
 
 DEBUG = True
 def debug(n,s):
