@@ -14,9 +14,13 @@ import os,sys
 
 # TODO:
 #   don't mess up existing multi-line brackets?
-#   replace closure with "function () {" and end that block with "}();"
 #   write file input / ouput
 #   write command line handling
+#   sometimes we don't want a semicolon at the end of a closure.  when?  how?
+
+
+# if True, add "();" at the end of a closure.  if False, you have to write that yourself in your code.
+CLOSURE_TAILS = True
 
 DEBUG = True
 def debug(n,s):
@@ -184,70 +188,6 @@ class Lines(object):
             print '      %s'%(''.join(line.annotation))
             print
 
-    def translate(self):
-        """Compute the new javascript from the given kavascript.
-        Store it in each line's newText attribute.
-        Assumes annotate() has already been called.
-        return True, or False if there were any problems.
-        """
-        debug(0,'translating')
-
-        for line in self.lines:
-            line.prepareForTranslation()
-
-        debug(1,'parsing indentation')
-        lastGoodIndent = indent = 0
-        for line in self.lines:
-            if not line.hasCode(): continue
-            spaces = line.numLeadingSpaces()
-            if spaces%4 != 0:
-                line.indent = lastGoodIndent
-                continue
-            indent = int(spaces / 4)
-            line.indent = indent
-            if indent > lastGoodIndent+1:
-                print 'ERROR: line %s is indented too far:'%line.lineNum
-                print '>>>%s<<<'%line.text
-                return False
-            lastGoodIndent = indent
-
-        debug(1,'replacing "closure" tokens')
-        for line in self.lines:
-            if line.hasCode():
-                line.replaceClosure()
-
-        debug(1,'adding open brackets')
-        lastIndent = 0
-        realLines = [line for line in self.lines if line.hasCode() and line.indent != -1]
-        # add open brackets
-        for ii in range(len(realLines)-1):
-            lineA = realLines[ii]
-            lineB = realLines[ii+1]
-            if lineA.indent < lineB.indent:
-                lineA.addOpenBracket()
-#             # add close brackets by inserting into the next real line.  this is ugly.
-#             if lineA.indent > lineB.indent:
-#                 numCloseBrackets = lineA.indent - lineB.indent
-#                 for bb in range(numCloseBrackets):
-#                     lineB.addCloseBracket()
-
-        debug(1,'adding close brackets')
-        # add close brackets by going backwards
-        for ii in range(len(realLines)-2,-1,-1):
-            lineA = realLines[ii]
-            lineB = realLines[ii+1]
-            if lineA.indent > lineB.indent:
-                numCloseBrackets = lineA.indent - lineB.indent
-                for bb in range(numCloseBrackets):
-                    indentHere = lineB.indent + bb
-                    newLine = Line('    '*indentHere + '}',-1)
-                    newLine.annotation = list(newLine.text.replace(' ','-'))
-                    newLine.indent = indentHere
-                    newLine.prepareForTranslation()
-                    self.lines.insert(lineA.lineNum,newLine)
-
-        return True
-
     def annotate(self):
         """Parse the original kavascript to understand where the comments, strings, etc are.
         """
@@ -304,6 +244,94 @@ class Lines(object):
             if state == 'c':
                 state = '-'
 
+    def translate(self):
+        """Compute the new javascript from the given kavascript.
+        Store it in each line's newText attribute.
+        Assumes annotate() has already been called.
+        return True, or False if there were any problems.
+        """
+        debug(0,'translating')
+
+        for line in self.lines:
+            line.prepareForTranslation()
+
+        debug(1,'parsing indentation')
+        lastGoodIndent = indent = 0
+        for line in self.lines:
+            if not line.hasCode(): continue
+            spaces = line.numLeadingSpaces()
+            if spaces%4 != 0:
+                line.indent = lastGoodIndent
+                continue
+            indent = int(spaces / 4)
+            line.indent = indent
+            if indent > lastGoodIndent+1:
+                print 'ERROR: line %s is indented too far:'%line.lineNum
+                print '>>>%s<<<'%line.text
+                return False
+            lastGoodIndent = indent
+
+        debug(1,'replacing "closure" tokens')
+        for line in self.lines:
+            if line.hasCode():
+                line.replaceClosure()
+
+        debug(1,'adding open brackets')
+        lastIndent = 0
+        realLines = [line for line in self.lines if line.hasCode() and line.indent != -1]
+        # add open brackets
+        for ii in range(len(realLines)-1):
+            lineA = realLines[ii]
+            lineB = realLines[ii+1]
+            if lineA.indent < lineB.indent:
+                lineA.addOpenBracket()
+#             # add close brackets by inserting into the next real line.  this is ugly.
+#             if lineA.indent > lineB.indent:
+#                 numCloseBrackets = lineA.indent - lineB.indent
+#                 for bb in range(numCloseBrackets):
+#                     lineB.addCloseBracket()
+
+        debug(1,'adding close brackets and parens at end of closures')
+        # add close brackets by going backwards
+        realLines = [line for line in self.lines if line.hasCode() and line.indent != -1]
+        # have to add a fake last line to make this work for some reason
+        fakeLastLine = Line('',-1)
+        fakeLastLine.indent = 0
+        fakeLastLine.prepareForTranslation()
+        realLines.append(fakeLastLine)
+        for ii in range(len(realLines)-2,-1,-1):
+            lineA = realLines[ii]
+            lineB = realLines[ii+1]
+            if lineA.indent > lineB.indent:
+                numCloseBrackets = lineA.indent - lineB.indent
+                for bb in range(numCloseBrackets):
+                    indentHere = lineB.indent + bb
+                    # look upwards and find the line with the open bracket that corresponds to this close bracket (the "parent")
+                    # so we can know if it's a closure or not
+                    parentHasClosure = 'error'
+                    for parentii in range(ii,-1,-1):
+                        if realLines[parentii].indent == indentHere:
+                            parentHasClosure = realLines[parentii].hasClosure
+                            break
+                    if parentHasClosure == 'error':
+                        print "ERROR: couldn't find parent line for close bracket to be inserted between lines %s and %s"%(ii,ii+1)
+                        return False
+                    # add a new line with a close bracket (and maybe "();" if the parent is a closure)
+                    if parentHasClosure and CLOSURE_TAILS:
+                        newLine = Line('    '*indentHere + '}();',-1)
+                        newLine.annotation = list(newLine.text.replace(' ','-').replace('(','x').replace(')','x').replace(';','x'))
+                    else:
+                        newLine = Line('    '*indentHere + '}',-1)
+                        newLine.annotation = list(newLine.text.replace(' ','-'))
+                    # add the new line
+                    newLine.indent = indentHere
+                    newLine.prepareForTranslation()
+                    self.lines.insert(lineA.lineNum,newLine)
+
+        return True
+
+
+
 
 
 SRC = """
@@ -319,6 +347,7 @@ var myObject = closure // this will be replaced with "function ()"
     if (    (1+2+3+4+5+6+7+8+9+10 == 1)
          && (1+2+3+4+5+6+7+8+9+10 == 1)   )
         value += 1;
+
     // comment
     return   // comment
         increment: function (inc) 
@@ -326,8 +355,8 @@ var myObject = closure // this will be replaced with "function ()"
         ,
         getValue: function (  ) 
             return value;
-(  );
 
+// whatevs
 """
 
 
@@ -337,8 +366,8 @@ lines.annotate()
 success = lines.translate()
 if not success:
     sys.exit(0)
-# lines.printNewAnnotatedSource()
 print '==========================================='
+# lines.printNewAnnotatedSource()
 for line in lines.lines:
     print line.newText
 print '==========================================='
