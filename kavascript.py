@@ -37,6 +37,7 @@ import os,sys
 #   write command line handling
 #   sometimes we don't want a semicolon at the end of a closure.  when?  how?
 #   strip trailing space added after "{" if it's the last thing on the line
+#   require ":" at the end of a line above an indent, like in python
 #   fix this bug:
 #       |    var x =
 #       |        name: 'joe',
@@ -383,8 +384,8 @@ class Lines(object):
 
 SRC = """
 // comment with apparent "string" and the word closure
-    /* long
-       comment */
+    /* long comment
+       with decoy things: closure "string" */
 
 var myObject = closure // this will be replaced with "function ()"
     var value = 0;
@@ -403,7 +404,14 @@ var myObject = closure // this will be replaced with "function ()"
         getValue: function (  ) 
             return value;
 
-// whatevs
+cubes = closure
+    var _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = list.length; _i < _len; _i++)
+        num = list[_i];
+        _results.push(math.cube(num));
+    return _results;
+
 """
 
 
