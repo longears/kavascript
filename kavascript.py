@@ -9,6 +9,7 @@ import os,sys
 # r   regex
 # x   code
 # -   whitespace
+# {}  added brackets
 
 DEBUG = True
 def debug(n,s):
@@ -48,19 +49,47 @@ class Line(object):
         self.newAnnotation = self.annotation[:]
         self.preparedForTranslation = True
 
+    def addCloseBracket(self):
+        """Assumes this line object has been prepared for translation.
+        """
+        assert self.preparedForTranslation
+
+        # make a temporary list version of the text
+        newText = list(self.newText)
+
+        ii = self.indent * 4
+        newText.insert(ii,' ')
+        newText.insert(ii,'}')
+        self.newAnnotation.insert(ii,'-')
+        self.newAnnotation.insert(ii,'}')
+
+        # convert text back to a string
+        self.newText = ''.join(newText)
+
     def addOpenBracket(self):
         """Assumes this line object has been prepared for translation.
         """
         assert self.preparedForTranslation
+
+        # make a temporary list version of the text
         newText = list(self.newText)
+
         # go backwards from the right until you hit the first 'x'
         for ii in range(len(newText)-1,-1,-1): # backwards
             if self.newAnnotation[ii] == 'x':
                 break
+
         # ii is now the index of the rightmost 'x'
+        # insert our bracket there and update the annotation
+        newText.insert(ii+1,' ')
         newText.insert(ii+1,'{')
-        self.newText = ''.join(newText)
+        newText.insert(ii+1,' ')
+        self.newAnnotation.insert(ii+1,'-')
         self.newAnnotation.insert(ii+1,'{')
+        self.newAnnotation.insert(ii+1,'-')
+
+        # convert text back to a string
+        self.newText = ''.join(newText)
 
 
 class Lines(object):
@@ -140,7 +169,8 @@ class Lines(object):
 
             if lineA.indent > lineB.indent:
                 numCloseBrackets = lineA.indent - lineB.indent
-                lineB.text = '}}}} '*numCloseBrackets + lineB.text
+                for bb in range(numCloseBrackets):
+                    lineB.addCloseBracket()
 
         return True
 
@@ -213,6 +243,7 @@ var myObject = function (  )
     if (thing1
           && thing)
         value += 1;
+
     // comment
     return   // comment
         increment: function (inc) 
@@ -232,5 +263,7 @@ success = lines.translate()
 if not success:
     sys.exit(0)
 lines.printNewAnnotatedSource()
+for line in lines.lines:
+    print line.newText
 
 
