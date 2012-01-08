@@ -46,6 +46,7 @@ class Line(object):
         self.lineNum = lineNum
         self.indent = -1 # -1 for useless lines, 0, 1, 2... for useful lines
         self.preparedForTranslation = False
+        self.hasClosure = False
 
     def numLeadingSpaces(self):
         ii = 0
@@ -76,12 +77,31 @@ class Line(object):
         """
         assert self.preparedForTranslation
 
-        # make a temporary list version of the text
-        newText = list(self.newText)
-
         token = 'closure'
+        newToken = 'function ()'
 
+        # prepare a chunk of annotation to go along with the new token
+        newAnnotation = []
+        for char in newToken:
+            if char.isspace():
+                newAnnotation.append('-')
+            else:
+                newAnnotation.append('x')
 
+        # find the first non-string, non-comment instance of the token
+        tokenIndices = multiFind(self.newText,token)
+        for ii in tokenIndices:
+            # make sure it's actual code
+            if self.newAnnotation[ii] != 'x': continue
+
+            # replace the token and annotation
+            self.newText = self.newText[:ii] + newToken + self.newText[ii+len(token):]
+            self.newAnnotation = self.newAnnotation[:ii] + list(newAnnotation) + self.newAnnotation[ii+len(token):]
+
+            self.hasClosure = True
+
+            # only do the first one we find
+            break
 
     def addCloseBracket(self):
         """Assumes this line object has been prepared for translation.
@@ -175,7 +195,7 @@ class Lines(object):
         for line in self.lines:
             line.prepareForTranslation()
 
-        debug(1,'indentation')
+        debug(1,'parsing indentation')
         lastGoodIndent = indent = 0
         for line in self.lines:
             if not line.hasCode(): continue
@@ -190,6 +210,10 @@ class Lines(object):
                 print '>>>%s<<<'%line.text
                 return False
             lastGoodIndent = indent
+
+        debug(1,'replacing "closure" tokens')
+        for line in self.lines:
+            line.replaceClosure()
 
         debug(1,'adding open brackets')
         lastIndent = 0
@@ -282,16 +306,17 @@ class Lines(object):
 
 
 SRC = """
-// comment with apparent "string"
+// comment with apparent "string" and closure
     /* long
        comment */
 
-var myObject = closure
+var myObject = closure // this will be replaced with "function ()"
     var value = 0;
-    var mystring = "he'l\\"lo // there";
-    var mystring = 'he"l\\"lo // there';
-    if (thing1
-          && thing)
+    var mystring1 = "he'l\\"lo // there";
+    var mystring2 = 'he"l\\"lo // there';
+    var mystring3 = "closure";
+    if (    (1+2+3+4+5+6+7+8+9+10 == 1)
+         && (1+2+3+4+5+6+7+8+9+10 == 1)   )
         value += 1;
     // comment
     return   // comment
