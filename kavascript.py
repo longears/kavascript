@@ -3,13 +3,6 @@
 from __future__ import division
 import os,sys
 
-# c   comment
-# C   bigcomment
-# "'  string
-# r   regex
-# x   code
-# X   code added during translation
-# -   whitespace
 
 # Documentation
 #
@@ -28,6 +21,9 @@ import os,sys
 #       |         && (1+2+3+4+5+6+7+8+9+10 == 1)   )
 #       |        value += 1
 #
+#       You can still use your own brackets within a single line, but don't
+#       provide your own multi-line brackets or you'll end up with doubles.
+#
 #   New "closure" keyword
 #       A new keyword "closure" has been added.  It is simply replaced
 #       with "function ()" wherever it occurs.
@@ -41,6 +37,16 @@ import os,sys
 #   write command line handling
 #   sometimes we don't want a semicolon at the end of a closure.  when?  how?
 #   strip trailing space added after "{" if it's the last thing on the line
+
+
+# ANNOTATIONS:
+#     c   comment
+#     C   bigcomment
+#     "'  string
+#     r   regex
+#     x   code
+#     X   code added during translation
+#     -   whitespace
 
 
 # if True, add "();" at the end of a closure.  if False, you have to write that yourself in your code.
