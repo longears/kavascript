@@ -17,6 +17,7 @@ import os,sys
 #   write file input / ouput
 #   write command line handling
 #   sometimes we don't want a semicolon at the end of a closure.  when?  how?
+#   strip trailing space added after "{" if it's the last thing on the line
 
 
 # if True, add "();" at the end of a closure.  if False, you have to write that yourself in your code.
