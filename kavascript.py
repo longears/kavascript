@@ -8,8 +8,8 @@ import os,sys
 # "'  string
 # r   regex
 # x   code
+# X   code added during translation
 # -   whitespace
-# {}  added brackets
 
 
 # TODO:
@@ -62,7 +62,7 @@ class Line(object):
     def hasCode(self):
         """Does this line contain any code or strings?  Otherwise it's just comments and/or whitespace.
         """
-        return 'x' in self.annotation or '"' in self.annotation or "'" in self.annotation
+        return 'x' in self.annotation or 'X' in self.annotation or '"' in self.annotation or "'" in self.annotation
 
     def setAnnotation(self,ii,state):
         assert not self.preparedForTranslation
@@ -90,13 +90,13 @@ class Line(object):
             if char.isspace():
                 newAnnotation.append('-')
             else:
-                newAnnotation.append('x')
+                newAnnotation.append('X')
 
         # find the first non-string, non-comment instance of the token
         tokenIndices = multiFind(self.newText,token)
         for ii in tokenIndices:
             # make sure it's actual code
-            if self.newAnnotation[ii] != 'x': continue
+            if self.newAnnotation[ii] not in 'xX': continue
 
             # replace the token and annotation
             self.newText = self.newText[:ii] + newToken + self.newText[ii+len(token):]
@@ -134,7 +134,7 @@ class Line(object):
 
         # go backwards from the right until you hit the first 'x'
         for ii in range(len(newText)-1,-1,-1): # backwards
-            if self.newAnnotation[ii] == 'x':
+            if self.newAnnotation[ii] in 'xX':
                 break
 
         # ii is now the index of the rightmost 'x'
@@ -143,7 +143,7 @@ class Line(object):
         newText.insert(ii+1,'{')
         newText.insert(ii+1,' ')
         self.newAnnotation.insert(ii+1,'-')
-        self.newAnnotation.insert(ii+1,'{')
+        self.newAnnotation.insert(ii+1,'X')
         self.newAnnotation.insert(ii+1,'-')
 
         # convert text back to a string
@@ -206,21 +206,21 @@ class Lines(object):
                     nextChar = line.text[ii+1]
 
                 # long comment: begin
-                if char == '/' and nextChar == '*' and state in '-x':
+                if char == '/' and nextChar == '*' and state in '-xX':
                     state = 'C'
                 # end
                 elif prevChar == '*' and char == '/' and state in 'C':
                     nextState = '-'
 
                 # single quoted string: begin
-                if char == "'" and state in '-x':
+                if char == "'" and state in '-xX':
                     state = "'"
                 # end
                 elif char == "'" and prevChar != '\\' and state == "'":
                     nextState = '-'
 
                 # double quoted string: begin
-                if char == '"' and state in '-x':
+                if char == '"' and state in '-xX':
                     state = '"'
                 # end
                 elif char == '"' and prevChar != '\\' and state == '"':
@@ -229,11 +229,11 @@ class Lines(object):
                 # whitespace / code
                 if not char.isspace() and state == '-':
                     state = 'x'
-                if char.isspace() and state == 'x':
+                if char.isspace() and state in 'xX':
                     state = '-'
 
                 # begin a small comment
-                if char == '/' and nextChar == '/' and state in '-x':
+                if char == '/' and nextChar == '/' and state in '-xX':
                     state = 'c'
 
                 line.setAnnotation(ii,state)
@@ -319,11 +319,16 @@ class Lines(object):
                     # add a new line with a close bracket (and maybe "();" if the parent is a closure)
                     if parentHasClosure and CLOSURE_TAILS:
                         newLine = Line('    '*indentHere + '}();',-1)
-                        newLine.annotation = list(newLine.text.replace(' ','-').replace('(','x').replace(')','x').replace(';','x'))
                     else:
                         newLine = Line('    '*indentHere + '}',-1)
-                        newLine.annotation = list(newLine.text.replace(' ','-'))
-                    # add the new line
+                    # set up and add the new line
+                    newAnnotation = []
+                    for char in newLine.text:
+                        if char.isspace():
+                            newAnnotation.append('-')
+                        else:
+                            newAnnotation.append('X')
+                    newLine.annotation = newAnnotation
                     newLine.indent = indentHere
                     newLine.prepareForTranslation()
                     self.lines.insert(lineA.lineNum,newLine)
