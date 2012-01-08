@@ -213,7 +213,8 @@ class Lines(object):
 
         debug(1,'replacing "closure" tokens')
         for line in self.lines:
-            line.replaceClosure()
+            if line.hasCode():
+                line.replaceClosure()
 
         debug(1,'adding open brackets')
         lastIndent = 0
@@ -306,7 +307,7 @@ class Lines(object):
 
 
 SRC = """
-// comment with apparent "string" and closure
+// comment with apparent "string" and the word closure
     /* long
        comment */
 
