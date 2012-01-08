@@ -11,6 +11,29 @@ import os,sys
 # X   code added during translation
 # -   whitespace
 
+# Documentation
+#
+#   Significant whitespace --> brackets
+#       Brackets are added according to the indentation of each line.
+#       For indendation to be considered as significant, it must come
+#       four spaces at a time, and new indentations should never be
+#       indented more than one level beyond the previous indentation.
+#
+#       Lines consisting of just whitespace and/or comments are ignored.
+#
+#       Be careful not to accidentally create significant indentation with
+#       a continued line.  Note how the middle line is not indented four spaces
+#       more than the line above it.  If it was, it would break:
+#       |    if (    (1+2+3+4+5+6+7+8+9+10 == 1)
+#       |         && (1+2+3+4+5+6+7+8+9+10 == 1)   )
+#       |        value += 1
+#
+#   New "closure" keyword
+#       A new keyword "closure" has been added.  It is simply replaced
+#       with "function ()" wherever it occurs.
+#       If the CLOSURE_TAILS option is set, then closure blocks will
+#       automatically be closed with "}();" instead of "}".
+
 
 # TODO:
 #   don't mess up existing multi-line brackets?
