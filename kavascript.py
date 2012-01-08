@@ -13,39 +13,52 @@ import os,sys
 #
 #       Lines consisting of just whitespace and/or comments are ignored.
 #
-#       Lines are compared to the line above.  If indented the same, it is
-#       a new line.  If indented 4 spaces, it is the beginning of a new block.
+#       Lines are compared to the line of code above.  If indented the same, it
+#       is a new line.  If indented 4 spaces, it is the beginning of a new block.
 #       Any other level of indentation, and the line is considered part of the
-#       line above it for the purposes of bracket insertion.
-#       Be careful not to accidentally create significant indentation with
-#       a continued line.  Note how the middle line is not indented four spaces
+#       line above it for the purposes of bracket insertion.  This lets you continue
+#       a long line on the next line, but be careful not to indent the magic
+#       4 spaces when you do so.
+# 
+#       Example:  Note how the middle line is not indented four spaces
 #       more than the line above it.  If it was, it would be considered the beginning
-#       of the block and the semicolon would be incorrectly inserted at the end
+#       of a block and a semicolon would be incorrectly inserted at the end
 #       of the first line:
 #       |    if (    (1+2+3+4+5+6+7+8+9+10 == 1)
 #       |         && (1+2+3+4+5+6+7+8+9+10 == 1)   )
 #       |        value += 1
 #
 #       You can still use your own brackets within a single line, but don't
-#       provide your own multi-line brackets or you'll end up with doubles.
+#       provide your own multi-line brackets or you'll end up with double brackets.
 #
-#       Don't forget your trailing semicolons:
+#       Remember your trailing semicolons:
 #       |    var myJSON =
 #       |        name: 'joe',
 #       |        cities: ['boston',
-#       |                 'new york']
-#       |    ;
+#       |                 'new york'] // this indent is ok because it's not
+#       |                             // four spaces in from the line above it
+#       |    ; // <-- remember this semicolon
+#
+#   Trailing colons
+#       If the line above a block ends with ":", Python style, the ":" will be
+#       gracefully removed.  Colons are optional because they don't look good
+#       when used for object / JSON brackets, only flow-control brackets.
+#       |    if (value < 10):
+#       |        value += 1
 #
 #   New "closure" keyword
 #       A new keyword "closure" has been added.  It is simply replaced
-#       with "(function ()" wherever it occurs.
-#       If the CLOSURE_TAILS option is set, then closure blocks will
-#       automatically be closed with "})();" instead of "}".
+#       When CLOSURE_TAILS is True, it is replaced with
+#           "(function ()" and ended with "})();"
+#           In this case, you must NOT create single-line closures.  They will break.
+#       When CLOSURE_TAILS is False, it is replaced with
+#           "function ()" and ended with "}"
 
 
 # TODO:
 #   don't mess up existing multi-line brackets?
 #   write file input / ouput
+#   fix single-line closures when CLOSURE_TAILS is on.
 #   write command line handling
 #   sometimes we don't want a semicolon at the end of a closure.  when?  how?
 #   strip trailing space added after "{" if it's the last thing on the line
@@ -102,6 +115,23 @@ class Line(object):
             ii += 1
         return ii
 
+    def removeLastColon(self):
+        """If the last code character is a color, remove it.
+        Assumes this line object has been prepared for translation.
+        """
+        assert self.preparedForTranslation
+        if not self.hasCode(): return
+        if not ':' in self.newText: return
+        newText = list(self.newText)
+        # go backwards from the right until you hit the first 'x'
+        for ii in range(len(newText)-1,-1,-1): # backwards
+            if self.newAnnotation[ii] in 'xX':
+                if newText[ii] == ':':
+                    del newText[ii]
+                    del self.newAnnotation[ii]
+                break
+        self.newText = ''.join(newText)
+
     def hasCode(self):
         """Does this line contain any code or strings?  Otherwise it's just comments and/or whitespace.
         """
@@ -125,7 +155,10 @@ class Line(object):
         assert self.preparedForTranslation
 
         token = 'closure'
-        newToken = '(function ()'
+        if CLOSURE_TAILS:
+            newToken = '(function ()'
+        else:
+            newToken = 'function ()'
 
         # prepare a chunk of annotation to go along with the new token
         newAnnotation = []
@@ -325,7 +358,7 @@ class Lines(object):
             if line.hasCode():
                 line.replaceClosure()
 
-        debug(1,'adding open brackets')
+        debug(1,'adding open brackets and removing trailing colons')
         lastIndent = 0
         realLines = [line for line in self.lines if line.hasCode() and line.indent != -1]
         # add open brackets
@@ -333,6 +366,7 @@ class Lines(object):
             lineA = realLines[ii]
             lineB = realLines[ii+1]
             if lineA.indent < lineB.indent:
+                lineA.removeLastColon()
                 lineA.addOpenBracket()
 #             # add close brackets by inserting into the next real line.  this is ugly.
 #             if lineA.indent > lineB.indent:
@@ -460,7 +494,6 @@ var x = doSomethingTo(
 );
 
 """
-
 
 lines = Lines()
 lines.readString(SRC)
