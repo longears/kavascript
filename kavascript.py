@@ -60,7 +60,6 @@ import os,sys
 #   write file input / ouput
 #   fix single-line closures when CLOSURE_TAILS is on?
 #   write command line handling
-#   don't end a line with a space when adding an open bracket
 #   sometimes we don't want a semicolon at the end of a closure when it's part of an expression
 #   strip trailing space added after "{" if it's the last thing on the line
 
@@ -213,12 +212,15 @@ class Line(object):
             if self.newAnnotation[ii] in 'xX':
                 break
 
+
         # ii is now the index of the rightmost 'x'
         # insert our bracket there and update the annotation
-        newText.insert(ii+1,' ')
+        endOfLine = (ii == len(newText)-1)
+        if not endOfLine:
+            newText.insert(ii+1,' ')
+            self.newAnnotation.insert(ii+1,'-')
         newText.insert(ii+1,'{')
         newText.insert(ii+1,' ')
-        self.newAnnotation.insert(ii+1,'-')
         self.newAnnotation.insert(ii+1,'X')
         self.newAnnotation.insert(ii+1,'-')
 
@@ -504,7 +506,7 @@ if not success:
 print '==========================================='
 # lines.printNewAnnotatedSource()
 for line in lines.lines:
-    print '>>%s<<'%line.newText
+    print line.newText
 print '==========================================='
 
 
