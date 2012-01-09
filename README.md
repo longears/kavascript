@@ -8,7 +8,7 @@ Example:
         cubes = closure:
             var i, len, results;
             results = [];
-            for (i = 0, len = list.length; i < len; i++)
+            for (i = 0, len = list.length; i < len; i++):
                 num = list[i];
                 results.push(math.cube(num));
             return results;
