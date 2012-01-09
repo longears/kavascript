@@ -58,11 +58,11 @@ import os,sys
 # TODO:
 #   don't mess up existing multi-line brackets?
 #   write file input / ouput
-#   fix single-line closures when CLOSURE_TAILS is on.
+#   fix single-line closures when CLOSURE_TAILS is on?
 #   write command line handling
-#   sometimes we don't want a semicolon at the end of a closure.  when?  how?
+#   don't end a line with a space when adding an open bracket
+#   sometimes we don't want a semicolon at the end of a closure when it's part of an expression
 #   strip trailing space added after "{" if it's the last thing on the line
-#   require ":" at the end of a line above an indent, like in python
 
 
 # ANNOTATIONS:
@@ -183,22 +183,22 @@ class Line(object):
             # only do the first one we find
             break
 
-    def addCloseBracket(self):
-        """Assumes this line object has been prepared for translation.
-        """
-        assert self.preparedForTranslation
-
-        # make a temporary list version of the text
-        newText = list(self.newText)
-
-        ii = self.indent * 4
-        newText.insert(ii,' ')
-        newText.insert(ii,'}')
-        self.newAnnotation.insert(ii,'-')
-        self.newAnnotation.insert(ii,'}')
-
-        # convert text back to a string
-        self.newText = ''.join(newText)
+#     def addCloseBracket(self):
+#         """Assumes this line object has been prepared for translation.
+#         """
+#         assert self.preparedForTranslation
+# 
+#         # make a temporary list version of the text
+#         newText = list(self.newText)
+# 
+#         ii = self.indent * 4
+#         newText.insert(ii,' ')
+#         newText.insert(ii,'}')
+#         self.newAnnotation.insert(ii,'-')
+#         self.newAnnotation.insert(ii,'}')
+# 
+#         # convert text back to a string
+#         self.newText = ''.join(newText)
 
     def addOpenBracket(self):
         """Assumes this line object has been prepared for translation.
@@ -504,7 +504,7 @@ if not success:
 print '==========================================='
 # lines.printNewAnnotatedSource()
 for line in lines.lines:
-    print line.newText
+    print '>>%s<<'%line.newText
 print '==========================================='
 
 
