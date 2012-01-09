@@ -228,7 +228,7 @@ class Line(object):
         self.newText = ''.join(newText)
 
 
-class Lines(object):
+class Program(object):
     def __init__(self,lines=[]):
         self.lines = []
         if lines:
@@ -497,15 +497,15 @@ var x = doSomethingTo(
 
 """
 
-lines = Lines()
-lines.readString(SRC)
-lines.annotate()
-success = lines.translate()
+program = Program()
+program.readString(SRC)
+program.annotate()
+success = program.translate()
 if not success:
     sys.exit(0)
 print '==========================================='
-# lines.printNewAnnotatedSource()
-for line in lines.lines:
+# program.printNewAnnotatedSource()
+for line in program.lines:
     print line.newText
 print '==========================================='
 
