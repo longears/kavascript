@@ -38,7 +38,7 @@ This is an early alpha project.
 ## Significant Whitespace ##
 
 Brackets are added according to the indentation of each line.
-For indentation to be considered significant, it must come
+For indentation to be considered significant it must come
 four spaces at a time, and new indentations must be exactly four
 spaces deeper than the previous level of indentation.
 
@@ -46,21 +46,21 @@ Lines consisting of just whitespace and/or comments are ignored.
 
 Lines are compared to the line of code above.  If indented the same, it
 is a new line.  If indented 4 spaces, it is the beginning of a new block.
-Any other level of indentation, and the line is considered part of the
+Any other level of indentation and the line is considered part of the
 line above it for the purposes of bracket insertion.  This lets you continue
-a long line on the next line, but be careful not to indent the magic
-4 spaces when you do so.
+a long line on the next line, as long as you avoid hitting the magic indentation
+level of 4 spaces.
 
 Example:  Note how the middle line is not indented four spaces
 more than the line above it.  If it was, it would be considered the beginning
 of a block and a semicolon would be incorrectly inserted at the end
 of the first line:
 
-        if (    (1+2+3+4+5+6+7+8+9+10 == 1)
-             && (1+2+3+4+5+6+7+8+9+10 == 1)   )
+        if (    (really.long.expression.goes.here === 1)
+             && (another.really.long.expression.goes.here === 1) ):
             value += 1
 
-You can still use your own brackets within a single line, but don't
+You can still use your own brackets within a single line but don't
 provide your own multi-line brackets or you'll end up with double brackets.
 
 Remember your trailing semicolons:
@@ -75,17 +75,23 @@ Remember your trailing semicolons:
 ## Trailing colons ##
 
 You can use a colon, Python style, to indicate that a new block is about
-to begin.  This is optional because they look good on flow control
-blocks (if, while, etc) but not on object blocks / JSON data.
+to begin.  This is optional because colons look good on most
+blocks (if, while, function) but not on object blocks / JSON data.
 
         if (value < 10):
             value += 1;
 
 ## New "closure" keyword ##
 
-A new keyword "closure" has been added, which you can use to reduce the visual overload of "function function function" by using a different word for functions which are acting as closures.  It has two modes depending on the value of CLOSURE_TAILS.
+A new keyword "closure" has been added.  Use it to reduce the
+visual overload of "function function function" by using a different word
+for functions which are acting as closures.  It has two modes depending
+on the value of CLOSURE_TAILS.
 
-When CLOSURE_TAILS is False, it is replaced with: `"function ()"` and its bock is closed with `"}"`
+When CLOSURE_TAILS is False, it is replaced with: `"function ()"` and its
+block is closed with `"}"`
 
-When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block is closed with `"})();"` In this case, you should use the "closure" keyword to create single-line closures, because they will break.  This mode is experimental.
+When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its
+block is closed with `"})();"` In this case, you should not use the "closure"
+keyword to create single-line closures because they will break.  This mode is experimental.
 
