@@ -182,23 +182,6 @@ class Line(object):
             # only do the first one we find
             break
 
-#     def addCloseBracket(self):
-#         """Assumes this line object has been prepared for translation.
-#         """
-#         assert self.preparedForTranslation
-# 
-#         # make a temporary list version of the text
-#         newText = list(self.newText)
-# 
-#         ii = self.indent * 4
-#         newText.insert(ii,' ')
-#         newText.insert(ii,'}')
-#         self.newAnnotation.insert(ii,'-')
-#         self.newAnnotation.insert(ii,'}')
-# 
-#         # convert text back to a string
-#         self.newText = ''.join(newText)
-
     def addOpenBracket(self):
         """Assumes this line object has been prepared for translation.
         """
@@ -370,11 +353,6 @@ class Program(object):
             if lineA.indent < lineB.indent:
                 lineA.removeLastColon()
                 lineA.addOpenBracket()
-#             # add close brackets by inserting into the next real line.  this is ugly.
-#             if lineA.indent > lineB.indent:
-#                 numCloseBrackets = lineA.indent - lineB.indent
-#                 for bb in range(numCloseBrackets):
-#                     lineB.addCloseBracket()
 
         debug(1,'adding close brackets and parens at end of closures')
         # add close brackets by going backwards
