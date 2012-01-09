@@ -73,11 +73,12 @@ Remember your trailing semicolons:
 
 ## Trailing colons ##
 
-If the line above a block ends with ":", Python style, the ":" will be
-gracefully removed.  Colons are optional because they don't look good
-when used for object / JSON brackets, only flow-control brackets.
-|    if (value < 10):
-|        value += 1
+You can use a colon, Python style, to indicate that a new block is about
+to begin.  This is optional because they look good on flow control
+blocks (if, while, etc) but not on object blocks / JSON data.
+
+    if (value < 10):
+        value += 1
 
 ## New "closure" keyword ##
 
