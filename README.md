@@ -2,6 +2,31 @@
 
 A quick project to bring Python-style significant whitespace to JavaScript.  Works as a preprocessor.
 
+Example:
+
+        // closure test
+        cubes = closure:
+            var i, len, results;
+            results = [];
+            for (i = 0, len = list.length; i < len; i++)
+                num = list[i];
+                results.push(math.cube(num));
+            return results;
+        ;
+
+Becomes
+
+        cubes = (function () {
+            var i, len, results;
+            results = [];
+            for (i = 0, len = list.length; i < len; i++) {
+                num = list[i];
+                results.push(math.cube(num));
+            }
+            return results;
+        })()
+        ;
+
 ## Todo ##
 
 This is an early alpha project.

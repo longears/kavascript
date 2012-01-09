@@ -66,7 +66,7 @@ A new keyword "closure" has been added.  It has two modes depending on the value
 
 When CLOSURE_TAILS is False, it is replaced with: `"function ()"` and its bock is closed with `"}"`
 
-When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block is closed with `"})();"` In this case, you should use the "closure" keyword to create single-line closures, because they will break.
+When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block is closed with `"})()"` In this case, you should use the "closure" keyword to create single-line closures, because they will break.
 """
 
 
@@ -75,7 +75,6 @@ When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block i
 #   write file input / ouput
 #   fix single-line closures when CLOSURE_TAILS is on?
 #   write command line handling
-#   sometimes we don't want a semicolon at the end of a closure when it's part of an expression
 #   strip trailing space added after "{" if it's the last thing on the line
 
 
@@ -89,7 +88,7 @@ When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block i
 #     -   whitespace
 
 
-# if True, add "();" at the end of a closure.  if False, you have to write that yourself in your code.
+# if True, add ")()" at the end of a closure.  if False, you have to write that yourself in your code.
 CLOSURE_TAILS = True
 
 DEBUG = True
@@ -394,9 +393,9 @@ class Program(object):
                     if parentHasClosure == 'error':
                         print "ERROR: couldn't find parent line for close bracket to be inserted between lines %s and %s"%(ii,ii+1)
                         return False
-                    # add a new line with a close bracket (and maybe "();" if the parent is a closure)
+                    # add a new line with a close bracket (and maybe ")()" if the parent is a closure)
                     if parentHasClosure and CLOSURE_TAILS:
-                        newLine = Line('    '*indentHere + '})();',-1)
+                        newLine = Line('    '*indentHere + '})()',-1)
                     else:
                         newLine = Line('    '*indentHere + '}',-1)
                     # set up and add the new line
@@ -422,52 +421,54 @@ SRC = r"""
     /* long comment
        with decoy things: closure "string" */
 
-var myObject = closure // this will be replaced with "function ()"
+var myObject = closure: // this will be replaced with "function ()"
     var value = 0;
     var mystring1 = "he'l\"lo // there";
     var mystring2 = 'he"l\"lo // there';
     var mystring3 = "closure";
     if (    (1+2+3+4+5+6+7+8+9+10 == 1)
-         && (1+2+3+4+5+6+7+8+9+10 == 1)   )
+         && (1+2+3+4+5+6+7+8+9+10 == 1)   ):
         value += 1;
 
     // comment
     return   // comment
-        increment: function (inc) 
+        increment: function (inc):
             value += typeof inc === 'number' ? inc : 1;
         ,
-        getValue: function (  ) 
+        getValue: function ():
             return value;
+;
 
 // closure test
-cubes = closure
-    var _i, _len, _results;
-    _results = [];
-    for (_i = 0, _len = list.length; _i < _len; _i++)
-        num = list[_i];
-        _results.push(math.cube(num));
-    return _results;
+cubes = closure:
+    var i, len, results;
+    results = [];
+    for (i = 0, len = list.length; i < len; i++)
+        num = list[i];
+        results.push(math.cube(num));
+    return results;
+;
 
 // typical node code
-http.createServer(function (req, res)
+http.createServer(function (req, res):
     res.writeHead(200, {'Content-Type': 'text/plain'});
     res.end('Hello World\n');
 ).listen(1337, "127.0.0.1");
 
 Step(
-    function readDir()
+    function readDir():
         fs.readdir(__dirname, this);
     ,
-    function readFiles(err, results)
+    function readFiles(err, results):
         if (err) throw err;
         // Create a new group
         var group = this.group();
-        results.forEach(function (filename)
+        results.forEach(function (filename):
             if (/\.js$/.test(filename))
                 fs.readFile(__dirname + "/" + filename, 'utf8', group());
         );
     ,
-    function showAll(err , files)
+    function showAll(err , files):
         if (err) throw err;
         console.dir(files);
 );
