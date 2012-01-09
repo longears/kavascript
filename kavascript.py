@@ -1,25 +1,29 @@
 #!/usr/bin/env python
+
 from __future__ import division
 import os,sys
-
 
 # TODO:
 #   don't mess up existing multi-line brackets?
 #   write file input / ouput
 #   fix single-line closures when CLOSURE_TAILS is on?
 #   write command line handling
+#   handle regexes
 #   strip trailing space added after "{" if it's the last thing on the line
 
 
-# ANNOTATIONS:
-#     c   comment
-#     C   bigcomment
+# ANNOTATIONS used by the Line class:
+#     -   whitespace
+#     c   comment //
+#     C   comment /* */
 #     "'  string
 #     r   regex
 #     x   code
 #     X   code added during translation
-#     -   whitespace
 
+
+#===================================================================================================
+# OPTIONS
 
 # if True, add ")()" at the end of a closure.  if False, you have to write that yourself in your code.
 CLOSURE_TAILS = True
@@ -27,6 +31,9 @@ CLOSURE_TAILS = True
 DEBUG = True
 def debug(n,s):
     if DEBUG: print '| %s%s'%('    '*n,s)
+
+#===================================================================================================
+# UTILS
 
 def multiFind(string,substring):
     """Return a list if integers indicating where the substring begins in the string.
@@ -43,7 +50,19 @@ def multiFind(string,substring):
         indices.append(start)
         start += len(substring)
 
+
+#===================================================================================================
+# LINE
+
 class Line(object):
+    """A line of code, plus extra structures to understand and transform it.
+    Most methods should be used either before or after prepareForTranslation():
+        -- Phase 1: Create a new Line with text and lineNum.  Call setAnnotation().
+        -- Call prepareForTranslation()
+        -- Phase 2: Call removeLastColon(), replaceClosure(), addOpenBracket()
+    An exception is indent, which can be changed either before or after prepareForTranslation()
+    """
+
     def __init__(self,text,lineNum):
         self.text = text
         self.annotation = ['-'] * len(self.text)
@@ -61,23 +80,6 @@ class Line(object):
             ii += 1
         return ii
 
-    def removeLastColon(self):
-        """If the last code character is a color, remove it.
-        Assumes this line object has been prepared for translation.
-        """
-        assert self.preparedForTranslation
-        if not self.hasCode(): return
-        if not ':' in self.newText: return
-        newText = list(self.newText)
-        # go backwards from the right until you hit the first 'x'
-        for ii in range(len(newText)-1,-1,-1): # backwards
-            if self.newAnnotation[ii] in 'xX':
-                if newText[ii] == ':':
-                    del newText[ii]
-                    del self.newAnnotation[ii]
-                break
-        self.newText = ''.join(newText)
-
     def hasCode(self):
         """Does this line contain any code or strings?  Otherwise it's just comments and/or whitespace.
         """
@@ -94,6 +96,23 @@ class Line(object):
         self.newText = self.text
         self.newAnnotation = self.annotation[:]
         self.preparedForTranslation = True
+
+    def removeLastColon(self):
+        """If the last code character is a color, remove it.
+        Assumes this line object has been prepared for translation.
+        """
+        assert self.preparedForTranslation
+        if not self.hasCode(): return
+        if not ':' in self.newText: return
+        newText = list(self.newText)
+        # go backwards from the right until you hit the first 'x'
+        for ii in range(len(newText)-1,-1,-1): # backwards
+            if self.newAnnotation[ii] in 'xX':
+                if newText[ii] == ':':
+                    del newText[ii]
+                    del self.newAnnotation[ii]
+                break
+        self.newText = ''.join(newText)
 
     def replaceClosure(self):
         """Assumes this line object has been prepared for translation.
@@ -158,7 +177,24 @@ class Line(object):
         self.newText = ''.join(newText)
 
 
+#===================================================================================================
+# PROGRAM
+
 class Program(object):
+    """A collection of Lines and some code to parse and transform them
+    from KavaScript to JavaScript.
+
+    Life cycle:
+        program = Program()
+        program.readString(SRC)
+        program.annotate()
+        success = program.translate()
+        if not success:
+            sys.exit(0)
+        for line in program.lines:
+            print line.newText
+    """
+
     def __init__(self,lines=[]):
         self.lines = []
         if lines:
@@ -168,14 +204,14 @@ class Program(object):
         self.lines.append(line)
 
     def readString(self,s):
-        """Read a string, split it into lines, and add it to this Lines object.
+        """Read a string, split it into lines, and add it to self.
         """
         debug(0,'reading string')
         for lineNum,text in enumerate(SRC.splitlines()):
             self.addLine(Line(text,lineNum+1))
 
     def printNewAnnotatedSource(self):
-        """Print the original kavascript with extra lines showing our annotation of the code.
+        """Print the generaated javascript with extra lines showing our annotation of the code.
         """
         debug(0,'printing generated javascript')
         for line in self.lines:
@@ -202,6 +238,7 @@ class Program(object):
         debug(0,'annotating')
         state = '-'
 
+        # this is a simple state machine that goes through the whole program line by line
         for line in self.lines:
             for ii,char in enumerate(line.text):
                 nextChar = None
@@ -343,11 +380,12 @@ class Program(object):
                     newLine.prepareForTranslation()
                     self.lines.insert(lineA.lineNum,newLine)
 
+        # success
         return True
 
 
-
-
+#===================================================================================================
+# MAIN
 
 SRC = r"""
 // comment with apparent "string" and the word closure
