@@ -4,10 +4,10 @@ A quick project to bring Python-style significant whitespace to JavaScript.  Wor
 
 Example:
 
-        // closure test
+        // comments are preserved
         cubes = closure:
             var i, len, results;
-            results = [];
+            results = []; // no matter where they are
             for (i = 0, len = list.length; i < len; i++):
                 num = list[i];
                 results.push(math.cube(num));
@@ -16,9 +16,10 @@ Example:
 
 Becomes
 
+        // comments are preserved
         cubes = (function () {
             var i, len, results;
-            results = [];
+            results = []; // no matter where they are
             for (i = 0, len = list.length; i < len; i++) {
                 num = list[i];
                 results.push(math.cube(num));
@@ -64,7 +65,7 @@ provide your own multi-line brackets or you'll end up with double brackets.
 
 Remember your trailing semicolons:
 
-    var myJSON =
+        var myJSON =
             name: 'joe',
             cities: ['boston',
                      'new york'] // this indent is ok because it's not
@@ -77,8 +78,8 @@ You can use a colon, Python style, to indicate that a new block is about
 to begin.  This is optional because they look good on flow control
 blocks (if, while, etc) but not on object blocks / JSON data.
 
-    if (value < 10):
-        value += 1;
+        if (value < 10):
+            value += 1;
 
 ## New "closure" keyword ##
 
