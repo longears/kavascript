@@ -81,9 +81,9 @@ when used for object / JSON brackets, only flow-control brackets.
 
 ## New "closure" keyword ##
 
-A new keyword "closure" has been added.  It has two modes depending on the value of CLOSURE_TAILS.
+A new keyword "closure" has been added, which you can use to reduce the visual overload of "function function function" by using a different word for functions which are acting as closures.  It has two modes depending on the value of CLOSURE_TAILS.
 
 When CLOSURE_TAILS is False, it is replaced with: `"function ()"` and its bock is closed with `"}"`
 
-When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block is closed with `"})();"` In this case, you should use the "closure" keyword to create single-line closures, because they will break.
+When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its block is closed with `"})();"` In this case, you should use the "closure" keyword to create single-line closures, because they will break.  This mode is experimental.
 
