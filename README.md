@@ -83,15 +83,17 @@ blocks (if, while, function) but not on object blocks / JSON data.
 
 ## New "closure" keyword ##
 
+This is experimental and likely to change.
+
 A new keyword "closure" has been added.  Use it to reduce the
 visual overload of "function function function" by using a different word
-for functions which are acting as closures.  It has two modes depending
-on the value of CLOSURE_TAILS.
+for functions which you're just using to create a closure.  It has two modes
+depending on the value of CLOSURE_TAILS.
 
 When CLOSURE_TAILS is False, it is replaced with: `"function ()"` and its
 block is closed with `"}"`
 
 When CLOSURE_TAILS is True, it is replaced with `"(function ()"` and its
 block is closed with `"})();"` In this case, you should not use the "closure"
-keyword to create single-line closures because they will break.  This mode is experimental.
+keyword to create single-line closures because they will break.
 
