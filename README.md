@@ -78,7 +78,7 @@ to begin.  This is optional because they look good on flow control
 blocks (if, while, etc) but not on object blocks / JSON data.
 
     if (value < 10):
-        value += 1
+        value += 1;
 
 ## New "closure" keyword ##
 
